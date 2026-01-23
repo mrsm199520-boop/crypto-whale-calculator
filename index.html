@@ -11,13 +11,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
   <!-- ===== Favicons (ROOT) ===== -->
-  
-<link rel="icon" href="favicon.ico?v=7" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png?v=7">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png?v=7">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=7">
-
-
+  <link rel="icon" href="favicon-v7.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="favicon-v7.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png?v=7">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png?v=7">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=7">
 
   <meta name="theme-color" content="#050A14">
   <meta name="msapplication-TileColor" content="#050A14">
@@ -338,6 +336,58 @@
 
       .grid{ grid-template-columns:1fr; }
       .content{ max-width: 100%; }
+    }
+
+    /* ===== Mobile fix: header always centered (NEW) ===== */
+    @media (max-width: 520px){
+      .page{
+        padding: 18px 14px 50px;
+      }
+
+      .topbar{
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        gap:10px;
+      }
+
+      .titleBlock{
+        width:100%;
+        text-align:center;
+      }
+
+      .titleBlock h1{
+        font-size:26px;
+        line-height:1.12;
+        white-space:normal;
+        overflow:visible;
+        text-overflow:unset;
+        margin:0 auto;
+      }
+
+      .sub{
+        font-size:13px;
+        line-height:1.35;
+        white-space:normal;
+        overflow:visible;
+        text-overflow:unset;
+        margin:8px auto 0;
+        max-width: 28ch;
+      }
+
+      .whale-top{
+        width:100%;
+        height:110px;
+        justify-content:center;
+      }
+
+      .whale-top img{
+        height:150px;
+        transform: translateY(6px);
+        opacity:.55;
+      }
     }
   </style>
 </head>
