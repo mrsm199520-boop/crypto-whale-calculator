@@ -1,1 +1,3 @@
-# crypto-whale-calculator
+# Crypto Whale Calculator
+
+Deployed via GitHub Pages.
