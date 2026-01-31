@@ -119,7 +119,6 @@
       object-fit:contain;
       opacity:.88;
 
-      /* базовый вид (анимация также меняет filter) */
       filter:
         drop-shadow(0 30px 90px rgba(103,213,255,.45))
         drop-shadow(0 12px 40px rgba(0,0,0,.35))
@@ -127,7 +126,6 @@
         contrast(1.12)
         brightness(1.06);
 
-      /* ===== Whale animation (desktop) ===== */
       animation: whaleFloat 5.2s ease-in-out infinite;
       will-change: transform, filter;
       transform-origin: 60% 60%;
@@ -353,10 +351,8 @@
 
     /* ===== MOBILE / TABLET FIX (MAIN) ===== */
     @media (max-width:1100px){
-      /* убираем пустую заглушку слева, она ломает центрирование */
       .topbar > div:first-child{ display:none; }
 
-      /* делаем всегда колонкой и центрируем */
       .topbar{
         display:flex;
         flex-direction:column;
@@ -394,7 +390,6 @@
         justify-content:center;
       }
 
-      /* mobile whale animation uses different translate */
       .whale-top img{
         height: 175px;
         opacity:.62;
@@ -468,7 +463,7 @@
 
       <div class="titleBlock">
         <h1>Арбитражный калькулятор</h1>
-        <p class="sub">Автоподсчёт спред входа → прибыль по 1 токену → чистая прибыль по PNL.</p>
+        <p class="sub">Автоподсчёт спред входа → прибыль по 1 токену → чистая прибыль по формуле PNL.</p>
       </div>
 
       <div class="whale-top" aria-hidden="true">
@@ -493,12 +488,12 @@
         <div class="grid">
           <label class="field long">
             <span class="label">Цена лонга (покупка)</span>
-            <input id="longEntry" class="input auto" type="number" step="0.00000001" placeholder="Напр. 62000" />
+            <input id="longEntry" class="input auto" type="number" step="0.00000001" placeholder="Напр. 0.0056" />
           </label>
 
           <label class="field short">
             <span class="label">Цена шорта (продажа)</span>
-            <input id="shortEntry" class="input auto" type="number" step="0.00000001" placeholder="Напр. 62100" />
+            <input id="shortEntry" class="input auto" type="number" step="0.00000001" placeholder="Напр. 0.0064" />
           </label>
         </div>
 
@@ -516,12 +511,12 @@
         <div class="grid">
           <label class="field long">
             <span class="label">Цена выхода по лонгу</span>
-            <input id="longExit" class="input auto" type="number" step="0.00000001" placeholder="Напр. 62500" />
+            <input id="longExit" class="input auto" type="number" step="0.00000001" placeholder="Напр. 0.0039" />
           </label>
 
           <label class="field short">
             <span class="label">Цена выхода по шорту</span>
-            <input id="shortExit" class="input auto" type="number" step="0.00000001" placeholder="Напр. 62400" />
+            <input id="shortExit" class="input auto" type="number" step="0.00000001" placeholder="Напр. 0.0039" />
           </label>
         </div>
 
@@ -530,7 +525,7 @@
           <div id="profitOut" class="v">—</div>
         </div>
 
-        <div class="note">Показывает результат по связке после входа и выхода.</div>
+        <div class="note">На 1 токен: (LongExit − LongEntry) + (ShortEntry − ShortExit).</div>
       </section>
 
       <section class="glass card">
@@ -539,12 +534,12 @@
         <div class="grid">
           <label class="field long">
             <span class="label">PNL по лонгу (USDT)</span>
-            <input id="pnlLong" class="input auto" type="number" step="0.01" placeholder="Напр. 12.5" />
+            <input id="pnlLong" class="input auto" type="number" step="0.01" placeholder="Объём входа, USDT (напр. 294.23)" />
           </label>
 
           <label class="field short">
             <span class="label">PNL по шорту (USDT)</span>
-            <input id="pnlShort" class="input auto" type="number" step="0.01" placeholder="Напр. -3.1" />
+            <input id="pnlShort" class="input auto" type="number" step="0.01" placeholder="Объём входа, USDT (напр. 330.98)" />
           </label>
         </div>
 
@@ -553,7 +548,7 @@
           <div id="netOut" class="v">—</div>
         </div>
 
-        <div class="note">Сумма PNL по лонгу и шорту в USDT.</div>
+        <div class="note">Подсказка: эти два поля — объёмы позиции на входе в USDT (notional), не прибыль. Net считается автоматически по ценам.</div>
       </section>
     </div>
   </div>
@@ -589,9 +584,11 @@
       const longEntry = num("longEntry");
       const shortEntry = num("shortEntry");
       const out = $("spreadOut");
+
       if (!Number.isFinite(longEntry) || !Number.isFinite(shortEntry) || longEntry === 0){
         clearOut(out); return;
       }
+
       const spread = (shortEntry - longEntry) / longEntry * 100;
       out.textContent = fmtPct(spread);
       setColored(out, spread);
@@ -603,28 +600,50 @@
       const longExit = num("longExit");
       const shortExit = num("shortExit");
       const out = $("profitOut");
+
       if (![longEntry, shortEntry, longExit, shortExit].every(Number.isFinite)){
         clearOut(out); return;
       }
+
       const profitPerToken = (longExit - longEntry) + (shortEntry - shortExit);
       out.textContent = fmtUsd(profitPerToken) + " USDT";
       setColored(out, profitPerToken);
     }
 
+    // Variant A (deterministic):
+    // pnlLong / pnlShort are entry notionals (USDT), not PNL.
     function calcNet(){
-      const pnlLong = num("pnlLong");
-      const pnlShort = num("pnlShort");
+      const longEntry = num("longEntry");
+      const shortEntry = num("shortEntry");
+      const longExit  = num("longExit");
+      const shortExit = num("shortExit");
+
+      const longNotionalUSDT  = num("pnlLong");   // entry notional USDT
+      const shortNotionalUSDT = num("pnlShort");  // entry notional USDT
+
       const out = $("netOut");
-      if (!Number.isFinite(pnlLong) || !Number.isFinite(pnlShort)){
+
+      if (![longEntry, shortEntry, longExit, shortExit, longNotionalUSDT, shortNotionalUSDT].every(Number.isFinite)
+          || longEntry <= 0 || shortEntry <= 0){
         clearOut(out); return;
       }
-      const net = pnlLong + pnlShort;
+
+      const qtyLong  = longNotionalUSDT  / longEntry;
+      const qtyShort = shortNotionalUSDT / shortEntry;
+
+      const pnlLongUSDT  = (longExit - longEntry) * qtyLong;
+      const pnlShortUSDT = (shortEntry - shortExit) * qtyShort;
+
+      const net = pnlLongUSDT + pnlShortUSDT;
+
       out.textContent = fmtUsd(net) + " USDT";
       setColored(out, net);
     }
 
     function recalcAll(){
-      calcSpread(); calcProfit(); calcNet();
+      calcSpread();
+      calcProfit();
+      calcNet();
     }
 
     document.querySelectorAll(".auto").forEach(inp=>{
